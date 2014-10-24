@@ -14,7 +14,7 @@
  */
 
 /*
- * mod_auth_memcookie_module: memcached cookies authentication
+ * auth_memcookie_module: memcached cookies authentication
  * 
  * Autor: Mathieu CARBONNEAUX
  * 
@@ -45,7 +45,7 @@
 #define unless(c) if(!(c))
 
 /* apache module name */
-module AP_MODULE_DECLARE_DATA mod_auth_memcookie_module;
+module AP_MODULE_DECLARE_DATA auth_memcookie_module;
 
 /* config structure */
 typedef struct {
@@ -262,14 +262,14 @@ static int get_Auth_memCookie_grp(request_rec *r, char *szGroup, char *szGroups)
     szMyGroups=apr_pstrdup(r->pool,szGroups);
     /* search group in groups */
     unless(szGrp_Pos=strstr(szMyGroups,szGroup)) {
-      return DECLINED;
+        return DECLINED;
     }
     /* search the next ':' and set '\0' in place of ':' */
     if ((szGrp_End=strchr(szGrp_Pos,':'))) szGrp_End[0]='\0';
 
     /* compar szGroup with szGrp_Pos if ok return ok */
     if(strcmp(szGroup,szGrp_Pos))
-       return DECLINED;
+        return DECLINED;
     ap_log_rerror(APLOG_MARK, APLOG_DEBUG|APLOG_NOERRNO, 0, r, ERRTAG "group found=%s",szGrp_Pos);
     return OK;
 }
@@ -293,7 +293,7 @@ static int Auth_memCookie_DoSetHeader(void*rec,const char *szKey, const char *sz
     char *szHeaderName=apr_pstrcat(r->pool,"X-MCAC_",szKey,NULL);
 
     /* get apache config */
-    conf = ap_get_module_config(r->per_dir_config, &mod_auth_memcookie_module);
+    conf = ap_get_module_config(r->per_dir_config, &auth_memcookie_module);
 
     if (conf->nAuth_memCookie_SetSessionHTTPHeaderEncode) {
       /* alloc memory for the estimated encode size of the string */
@@ -331,7 +331,7 @@ static int Auth_memCookie_check_cookie(request_rec *r)
     ap_log_rerror(APLOG_MARK,APLOG_DEBUG|APLOG_NOERRNO, 0,r,ERRTAG  "ap_hook_check_user_id in");
 
     /* get apache config */
-    conf = ap_get_module_config(r->per_dir_config, &mod_auth_memcookie_module);
+    conf = ap_get_module_config(r->per_dir_config, &auth_memcookie_module);
 
     ap_log_rerror(APLOG_MARK,APLOG_DEBUG|APLOG_NOERRNO, 0,r,ERRTAG  "check MatchIP_Mode:%d",conf->nAuth_memCookie_MatchIP_Mode);
     /* set remote ip in case of conf->nAuth_memCookie_MatchIP_Mode value */
@@ -344,7 +344,7 @@ static int Auth_memCookie_check_cookie(request_rec *r)
 
 
     unless(conf->nAuth_memCookie_Authoritative)
-	return DECLINED;
+        return DECLINED;
 
     ap_log_rerror(APLOG_MARK,APLOG_DEBUG|APLOG_NOERRNO, 0,r,ERRTAG  "AuthType are '%s'", ap_auth_type(r));
     unless(strncmp("Cookie",ap_auth_type(r),6)==0) {
@@ -442,11 +442,11 @@ static int Auth_memCookie_check_auth(request_rec *r)
     ap_log_rerror(APLOG_MARK,APLOG_DEBUG|APLOG_NOERRNO, 0,r,ERRTAG  "ap_hook_auth_checker in");
 
     /* get apache config */
-    conf = ap_get_module_config(r->per_dir_config, &mod_auth_memcookie_module);
+    conf = ap_get_module_config(r->per_dir_config, &auth_memcookie_module);
 
     /* check if module are authoritative */
     unless(conf->nAuth_memCookie_Authoritative)
-	return DECLINED;
+        return DECLINED;
 
     /* check if module are authoritative in group check */
     unless(conf->nAuth_memCookie_GroupAuthoritative)
@@ -522,6 +522,8 @@ static int Auth_memCookie_check_auth(request_rec *r)
  **************************************************/
 static void register_hooks(apr_pool_t *p)
 {
+    //ap_hook_handler(Auth_memCookie_check_cookie, NULL, NULL, APR_HOOK_FIRST);
+    //ap_hook_handler(Auth_memCookie_check_auth, NULL, NULL, APR_HOOK_MIDDLE);
     ap_hook_check_user_id(Auth_memCookie_check_cookie, NULL, NULL, APR_HOOK_FIRST);
     ap_hook_auth_checker(Auth_memCookie_check_auth, NULL, NULL, APR_HOOK_FIRST);
 }
@@ -533,8 +535,8 @@ static void *create_Auth_memCookie_dir_config(apr_pool_t *p, char *d)
 {
     strAuth_memCookie_config_rec *conf = apr_palloc(p, sizeof(*conf));
 
-    conf->szAuth_memCookie_memCached_addr = apr_pstrdup(p,"127.0.0.1:11211");
-    conf->szAuth_memCookie_CookieName = apr_pstrdup(p,"AuthMemCookie");
+    conf->szAuth_memCookie_memCached_addr = apr_pstrdup(p, "127.0.0.1:11211");
+    conf->szAuth_memCookie_CookieName = apr_pstrdup(p, "AuthMemCookie");
     conf->tAuth_memCookie_MemcacheObjectExpiry = 3600; /* memcache object expire time, 1H by default */
     conf->nAuth_memCookie_MemcacheObjectExpiryReset = 1;  /* fortress is secure by default, reset object expire time in memcache by default */
     conf->nAuth_memCookie_MatchIP_Mode = 0;  /* method used in matchip, use (0) remote ip by default, if set to 1 for use ip from x_forwarded_for http header and 2 for use Via http header */
@@ -543,7 +545,7 @@ static void *create_Auth_memCookie_dir_config(apr_pool_t *p, char *d)
     conf->nAuth_memCookie_authbasicfix = 1;  /* fix header for php auth by default */
     conf->nAuth_memCookie_SetSessionHTTPHeader = 0; /* set session information in http header of authenticated user */
     conf->nAuth_memCookie_SetSessionHTTPHeaderEncode = 1; /* encode http header groups value by default */
-    conf->nAuth_memCookie_SessionTableSize=10; /* Max number of element in session information table, 10 by default */
+    conf->nAuth_memCookie_SessionTableSize = 10; /* Max number of element in session information table, 10 by default */
 
     return conf;
 }
@@ -611,7 +613,7 @@ static const command_rec Auth_memCookie_cmds[] =
 };
 
 /* apache module structure */
-module AP_MODULE_DECLARE_DATA mod_auth_memcookie_module =
+module AP_MODULE_DECLARE_DATA auth_memcookie_module =
 {
     STANDARD20_MODULE_STUFF,
     create_Auth_memCookie_dir_config, /* dir config creater */
